@@ -1,0 +1,27 @@
+VD-uni CLI commands
+
+1) Download
+./scripts/vd download "<url>"
+
+Example:
+./scripts/vd download "https://youtube.com/watch?v=sayebOQcWew"
+
+2) Export cookies
+./scripts/vd cookies --browser <chrome|chromium|brave|firefox> --domain <domain>
+
+Examples:
+./scripts/vd cookies --browser chrome --domain youtube.com
+./scripts/vd cookies --browser brave --domain x.com
+./scripts/vd cookies --browser firefox --domain pornhub.com
+
+3) Update tools (also bumps VERSION patch)
+./scripts/vd-update
+
+4) Version
+./scripts/vd version
+./scripts/vd version --bump <major|minor|patch>
+
+Notes
+- Downloads go to: /home/khamani808/VD-uni/downloads
+- GUI launcher: ./scripts/vd-gui
+- Per-site cookies go to: /home/khamani808/VD-uni/config/cookies/<domain>.txt

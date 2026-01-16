@@ -1,0 +1,14 @@
+{
+  "youtube": {
+    "enabled": true,
+    "notes": "Default adapter uses yt-dlp"
+  },
+  "x": {
+    "enabled": true,
+    "notes": "Uses yt-dlp; may require cookies for age-restricted or login-only media"
+  },
+  "pornhub": {
+    "enabled": false,
+    "notes": "Uses yt-dlp; ensure compliance with local law and site terms"
+  }
+}

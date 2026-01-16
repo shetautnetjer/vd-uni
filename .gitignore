@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual env
+.venv/
+
+# Local artifacts
+downloads/
+logs/
+packages/
+
+# Cookies / auth data
+config/cookies.txt
+config/cookies/
+
+# OS
+.DS_Store
+Thumbs.db

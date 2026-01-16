@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+if [[ -x "$DIR/.venv/bin/python" ]]; then
+  PYTHON="$DIR/.venv/bin/python"
+else
+  PYTHON=${PYTHON:-python3}
+fi
+export PYTHONPATH="$DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+
+$PYTHON -m vd.gui

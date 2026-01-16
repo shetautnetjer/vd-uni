@@ -1,0 +1,7 @@
+{
+  "output_dir": "downloads",
+  "quality": "bestvideo+bestaudio/best",
+  "use_cookies": true,
+  "live_from_start": false,
+  "per_site_cookies": true
+}
