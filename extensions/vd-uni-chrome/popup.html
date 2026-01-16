@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VD-uni URL Capture</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 12px;
+        width: 320px;
+      }
+      h1 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      textarea {
+        width: 100%;
+        height: 140px;
+        resize: vertical;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      button {
+        flex: 1;
+        padding: 6px;
+        font-size: 12px;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      .hint {
+        font-size: 11px;
+        color: #555;
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>VD-uni URL Capture</h1>
+    <label>
+      <input id="capture-toggle" type="checkbox" />
+      Capture .ts/.m3u8 URLs
+    </label>
+    <textarea id="url-list" placeholder="Captured URLs will appear here..."></textarea>
+    <div class="row">
+      <button id="copy-btn">Copy</button>
+      <button id="download-btn">Download urls.txt</button>
+      <button id="clear-btn">Clear</button>
+    </div>
+    <div class="hint">
+      Use with <code>./scripts/vd download --file urls.txt</code> or paste into a file.
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

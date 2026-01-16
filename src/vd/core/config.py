@@ -15,6 +15,7 @@ class Settings:
     use_cookies: bool
     live_from_start: bool
     per_site_cookies: bool
+    concurrent_fragments: int
 
 
 DEFAULT_SETTINGS = Settings(
@@ -23,6 +24,7 @@ DEFAULT_SETTINGS = Settings(
     use_cookies=True,
     live_from_start=False,
     per_site_cookies=True,
+    concurrent_fragments=4,
 )
 
 
@@ -47,6 +49,9 @@ def load_settings() -> Settings:
         use_cookies=bool(data.get("use_cookies", DEFAULT_SETTINGS.use_cookies)),
         live_from_start=bool(data.get("live_from_start", DEFAULT_SETTINGS.live_from_start)),
         per_site_cookies=bool(data.get("per_site_cookies", DEFAULT_SETTINGS.per_site_cookies)),
+        concurrent_fragments=int(
+            data.get("concurrent_fragments", DEFAULT_SETTINGS.concurrent_fragments)
+        ),
     )
 
 
@@ -61,6 +66,7 @@ def ensure_config_files() -> None:
                     "use_cookies": DEFAULT_SETTINGS.use_cookies,
                     "live_from_start": DEFAULT_SETTINGS.live_from_start,
                     "per_site_cookies": DEFAULT_SETTINGS.per_site_cookies,
+                    "concurrent_fragments": DEFAULT_SETTINGS.concurrent_fragments,
                 },
                 indent=2,
             ),

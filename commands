@@ -2,9 +2,12 @@ VD-uni CLI commands
 
 1) Download
 ./scripts/vd download "<url>"
+./scripts/vd download "<url1>" "<url2>"
+./scripts/vd download --file /path/to/urls.txt
 
 Example:
 ./scripts/vd download "https://youtube.com/watch?v=sayebOQcWew"
+./scripts/vd download --file urls.txt
 
 2) Export cookies
 ./scripts/vd cookies --browser <chrome|chromium|brave|firefox> --domain <domain>
