@@ -14,6 +14,8 @@
 - Default: highest
 - Fallbacks: list in priority order
 
+## performance
+- `concurrent_fragments`: increase fragment concurrency for faster downloads (default: 4).
+
 ## sites
 - Per-site settings in `config/sites.json`
-

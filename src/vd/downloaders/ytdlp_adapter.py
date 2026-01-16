@@ -25,6 +25,11 @@ def _cookies_for_url(url: str, settings: Settings) -> Path | None:
     return None
 
 
+def _looks_like_segment(url: str) -> bool:
+    lowered = url.lower()
+    return lowered.endswith(".ts") or ".ts?" in lowered or lowered.endswith(".m3u8") or ".m3u8?" in lowered
+
+
 def build_args(url: str, settings: Settings) -> list[str]:
     args = [
         sys.executable,
@@ -44,6 +49,12 @@ def build_args(url: str, settings: Settings) -> list[str]:
     if settings.live_from_start:
         args.append("--live-from-start")
 
+    if settings.concurrent_fragments > 1:
+        args += ["--concurrent-fragments", str(settings.concurrent_fragments)]
+
+    if _looks_like_segment(url):
+        args.append("--allow-unplayable-formats")
+
     args.append(url)
     return args
 
@@ -52,3 +63,12 @@ def run_download(url: str, settings: Settings) -> int:
     args = build_args(url, settings)
     proc = subprocess.run(args, check=False)
     return proc.returncode
+
+
+def run_downloads(urls: list[str], settings: Settings) -> int:
+    result = 0
+    for url in urls:
+        rc = run_download(url, settings)
+        if rc != 0:
+            result = rc
+    return result

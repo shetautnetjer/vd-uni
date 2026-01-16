@@ -5,7 +5,7 @@ from pathlib import Path
 
 from vd.core.config import ensure_config_files, load_settings
 from vd.core.logging_setup import configure_logging
-from vd.downloaders.ytdlp_adapter import run_download
+from vd.downloaders.ytdlp_adapter import run_downloads
 from vd.updaters.update import update_tools
 
 
@@ -15,6 +15,17 @@ def _print_commands() -> None:
         print(commands_file.read_text(encoding="utf-8"))
     else:
         print("commands file not found")
+
+
+def _load_url_list(path: Path) -> list[str]:
+    urls: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        cleaned = line.strip()
+        if not cleaned or cleaned.startswith("#"):
+            continue
+        urls.append(cleaned)
+    return urls
+
 
 def _read_version_file() -> str | None:
     version_file = Path(__file__).resolve().parents[3] / "VERSION"
@@ -62,7 +73,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd")
 
     dl = sub.add_parser("download", help="Download a video by URL")
-    dl.add_argument("url")
+    dl.add_argument("url", nargs="*")
+    dl.add_argument("--file", dest="url_file", help="File with URLs (one per line)")
 
     upd = sub.add_parser("update", help="Update tools (yt-dlp)")
     upd.add_argument("--pip", default="python")
@@ -85,8 +97,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "download":
         settings = load_settings()
         settings.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info("Starting download: %s", args.url)
-        rc = run_download(args.url, settings)
+        urls: list[str] = []
+        if args.url_file:
+            path = Path(args.url_file)
+            if not path.exists():
+                logger.error("URL file not found: %s", path)
+                return 2
+            urls.extend(_load_url_list(path))
+        urls.extend(args.url or [])
+
+        if not urls:
+            logger.error("No URLs provided. Use a URL or --file.")
+            return 2
+
+        logger.info("Starting download for %s url(s)", len(urls))
+        rc = run_downloads(urls, settings)
         if rc != 0:
             logger.error("Download failed with code %s", rc)
         return rc

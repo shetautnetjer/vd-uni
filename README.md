@@ -39,11 +39,23 @@ python -m pip install -r requirements.txt
 ./scripts/vd download "https://youtube.com/live/sayebOQcWew"
 ```
 
+Bulk downloads:
+
+```bash
+./scripts/vd download --file urls.txt
+./scripts/vd download "https://example.com/video1" "https://example.com/video2"
+```
+
 ### 4b) GUI
 
 ```bash
 ./scripts/vd-gui
 ```
+
+### 4c) Chrome extension (dev mode)
+
+The repo includes a small Chrome extension to capture `.ts`/`.m3u8` URLs for
+batch downloads. See `docs/EXTENSION.md`.
 
 ### 5) Update tools
 

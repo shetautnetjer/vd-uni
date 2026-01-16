@@ -3,5 +3,6 @@
   "quality": "bestvideo+bestaudio/best",
   "use_cookies": true,
   "live_from_start": false,
-  "per_site_cookies": true
+  "per_site_cookies": true,
+  "concurrent_fragments": 4
 }
