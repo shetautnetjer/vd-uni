@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import queue
+from dataclasses import replace
 import subprocess
 import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, ttk
 
-from vd.core.config import Settings, ensure_config_files, load_settings
+from vd.core.config import ensure_config_files, load_settings
 from vd.downloaders.ytdlp_adapter import build_args
+from vd.utils.privacy import redact_text
 
 
 class DownloaderApp(tk.Tk):
@@ -17,7 +19,7 @@ class DownloaderApp(tk.Tk):
         self.title("VD-uni Downloader")
         self.geometry("760x520")
 
-        self._log_queue: queue.Queue[str] = queue.Queue()
+        self._log_queue: queue.Queue[str | None] = queue.Queue()
         self._download_thread: threading.Thread | None = None
         self._proc: subprocess.Popen[str] | None = None
 
@@ -58,7 +60,7 @@ class DownloaderApp(tk.Tk):
 
     def _append_log(self, line: str) -> None:
         self.log_text.configure(state="normal")
-        self.log_text.insert("end", line)
+        self.log_text.insert("end", redact_text(line))
         self.log_text.see("end")
         self.log_text.configure(state="disabled")
 
@@ -66,7 +68,10 @@ class DownloaderApp(tk.Tk):
         try:
             while True:
                 line = self._log_queue.get_nowait()
-                self._append_log(line)
+                if line is None:
+                    self.download_btn.configure(state="normal")
+                else:
+                    self._append_log(line)
         except queue.Empty:
             pass
         self.after(100, self._drain_logs)
@@ -87,18 +92,14 @@ class DownloaderApp(tk.Tk):
             return
 
         out_path = Path(output_dir)
-        out_path.mkdir(parents=True, exist_ok=True)
+        try:
+            out_path.mkdir(parents=True, exist_ok=True)
+            settings = replace(load_settings(), output_dir=out_path)
+            args = build_args(url, settings)
+        except (OSError, ValueError) as exc:
+            self._append_log(f"Cannot start download: {exc}\n")
+            return
 
-        settings = load_settings()
-        settings = Settings(
-            output_dir=out_path,
-            quality=settings.quality,
-            use_cookies=settings.use_cookies,
-            live_from_start=settings.live_from_start,
-            per_site_cookies=settings.per_site_cookies,
-        )
-
-        args = build_args(url, settings)
         self.download_btn.configure(state="disabled")
         self._append_log(f"Starting download: {url}\n")
 
@@ -120,7 +121,7 @@ class DownloaderApp(tk.Tk):
                 self._log_queue.put(f"Download failed: {exc}\n")
             finally:
                 self._proc = None
-                self.download_btn.configure(state="normal")
+                self._log_queue.put(None)
 
         self._download_thread = threading.Thread(target=_run, daemon=True)
         self._download_thread.start()

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "VD-uni URL Capture",
-  "version": "0.1.0",
-  "description": "Capture .ts/.m3u8 URLs for batch downloads with VD-uni.",
+  "version": "0.2.0",
+  "description": "Capture video files and HLS/DASH manifests, with optional segment capture.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "VD-uni URL Capture"
@@ -10,6 +10,13 @@
   "background": {
     "service_worker": "service_worker.js"
   },
-  "permissions": ["storage", "downloads", "webRequest"],
-  "host_permissions": ["<all_urls>"]
+  "permissions": [
+    "storage",
+    "downloads",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ]
 }

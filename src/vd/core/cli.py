@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from dataclasses import replace
 from pathlib import Path
 
-from vd.core.config import ensure_config_files, load_settings
+from vd.core.config import DOWNLOAD_CONTAINERS, ensure_config_files, load_settings
+from vd.core.media_cli import MEDIA_COMMANDS, add_media_commands, run_media_command
+from vd.media import MediaError
+from vd.utils.privacy import redact_text
 from vd.core.logging_setup import configure_logging
 from vd.downloaders.ytdlp_adapter import run_downloads
 from vd.updaters.update import update_tools
@@ -19,7 +24,7 @@ def _print_commands() -> None:
 
 def _load_url_list(path: Path) -> list[str]:
     urls: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         cleaned = line.strip()
         if not cleaned or cleaned.startswith("#"):
             continue
@@ -68,13 +73,23 @@ def _bump_version(part: str) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="vd")
     sub = parser.add_subparsers(dest="cmd")
+    add_media_commands(sub)
 
     dl = sub.add_parser("download", help="Download a video by URL")
     dl.add_argument("url", nargs="*")
     dl.add_argument("--file", dest="url_file", help="File with URLs (one per line)")
+    dl.add_argument('-P', '--output-dir')
+    dl.add_argument('-f', '--format', dest='quality')
+    dl.add_argument('--fragments', type=int)
+    dl.add_argument('--retries', type=int)
+    dl.add_argument('--no-cookies', action='store_true')
+    container = dl.add_mutually_exclusive_group()
+    container.add_argument('--remux', choices=DOWNLOAD_CONTAINERS)
+    container.add_argument('--recode', choices=DOWNLOAD_CONTAINERS)
+
 
     upd = sub.add_parser("update", help="Update tools (yt-dlp)")
     upd.add_argument("--pip", default="python")
@@ -90,12 +105,25 @@ def main(argv: list[str] | None = None) -> int:
     ver.add_argument("--bump", choices=["major", "minor", "patch"])
 
     args = parser.parse_args(argv)
+    if args.cmd in MEDIA_COMMANDS:
+        return run_media_command(args)
 
     logger = configure_logging()
     ensure_config_files()
 
     if args.cmd == "download":
         settings = load_settings()
+        changes = {}
+        for argument, field in (('output_dir', 'output_dir'), ('quality', 'quality'), ('fragments', 'concurrent_fragments'), ('retries', 'retries')):
+            if getattr(args, argument) is not None:
+                changes[field] = getattr(args, argument)
+        if args.remux:
+            changes.update(remux_video=args.remux, recode_video=None)
+        if args.recode:
+            changes.update(recode_video=args.recode, remux_video=None)
+        if args.no_cookies:
+            changes['use_cookies'] = False
+        settings = replace(settings, **changes)
         settings.output_dir.mkdir(parents=True, exist_ok=True)
         urls: list[str] = []
         if args.url_file:
@@ -144,6 +172,17 @@ def main(argv: list[str] | None = None) -> int:
 
     parser.print_help()
     return 2
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        return _main(argv)
+    except KeyboardInterrupt:
+        print('vd: cancelled', file=sys.stderr)
+        return 130
+    except (OSError, ValueError, MediaError) as exc:
+        print(redact_text(f'vd: {exc}'), file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

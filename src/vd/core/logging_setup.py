@@ -4,6 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 from vd.utils.paths import LOGS_DIR, ensure_dirs
+from vd.utils.privacy import PrivateFormatter
 
 
 def configure_logging() -> logging.Logger:
@@ -20,7 +21,7 @@ def configure_logging() -> logging.Logger:
         backupCount=3,
         encoding="utf-8",
     )
-    fmt = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+    fmt = PrivateFormatter("%(asctime)s | %(levelname)s | %(message)s")
     file_handler.setFormatter(fmt)
 
     console = logging.StreamHandler()

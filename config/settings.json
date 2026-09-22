@@ -4,5 +4,9 @@
   "use_cookies": true,
   "live_from_start": false,
   "per_site_cookies": true,
-  "concurrent_fragments": 4
+  "concurrent_fragments": 4,
+  "retries": 10,
+  "socket_timeout": 30,
+  "remux_video": null,
+  "recode_video": null
 }
