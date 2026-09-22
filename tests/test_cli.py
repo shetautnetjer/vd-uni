@@ -17,11 +17,13 @@ class CLITests(unittest.TestCase):
                 self.assertEqual(result.exception.code, 0)
 
     def test_download_overrides_do_not_mutate_defaults(self):
-        with patch('vd.core.cli.ensure_config_files'), patch('vd.core.cli.configure_logging'), patch('vd.core.cli.load_settings', return_value=DEFAULT_SETTINGS), patch('vd.core.cli.run_downloads', return_value=0) as run:
-            rc = main(['download', 'https://example.com/video', '--fragments', '8', '--retries', '3', '--remux', 'mkv', '--no-cookies'])
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp, patch('vd.core.cli.ensure_config_files'), patch('vd.core.cli.configure_logging'), patch('vd.core.cli.load_settings', return_value=DEFAULT_SETTINGS), patch('vd.core.cli.run_downloads', return_value=0) as run:
+            rc = main(['download', 'https://example.com/video', '--output-dir', tmp, '--fragments', '8', '--retries', '3', '--remux', 'mkv', '--no-cookies'])
         self.assertEqual(rc, 0)
         settings = run.call_args.args[1]
-        self.assertEqual((settings.concurrent_fragments, settings.retries, settings.remux_video, settings.use_cookies), (8, 3, 'mkv', False))
+        self.assertEqual((settings.output_dir, settings.concurrent_fragments, settings.retries, settings.remux_video, settings.use_cookies), (Path(tmp), 8, 3, 'mkv', False))
         self.assertEqual(DEFAULT_SETTINGS.concurrent_fragments, 4)
 
     def test_bad_config_is_reported_without_traceback(self):
