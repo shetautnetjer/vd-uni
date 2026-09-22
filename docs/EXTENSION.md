@@ -1,35 +1,34 @@
-# Chrome Extension (Dev Mode)
+# Chrome URL capture
 
-This repo includes a small Chrome extension that captures `.ts` and `.m3u8` URLs
-from browser network traffic so you can batch-download them with VD-uni.
+Open `chrome://extensions`, enable Developer mode, and load
+`extensions/vd-uni-chrome` unpacked. Pin the popup and enable **Capture video URLs**.
+New installs are opt-in; existing enabled/disabled preferences are retained.
 
-## Load the extension (Dev Mode)
+The worker observes successful HTTP(S) responses belonging to browser tabs. It
+recognizes HLS `.m3u8`, DASH `.mpd`, common video extensions, and video MIME types,
+including extensionless URLs. It stores only URLs locally, not cookies or complete
+request/response headers. The newest 500 unique URLs are retained. Simultaneous
+captures and Clear are serialized, preventing lost updates or resurrected entries.
 
-1. Open Chrome and go to `chrome://extensions`.
-2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select `extensions/vd-uni-chrome`.
-4. Pin the extension to the toolbar for easy access.
+Individual `.ts`, `.m4s`, and related segment responses require the optional
+**Include individual stream segments** checkbox. A `.ts` can also be a standalone
+video: this is a capture heuristic, not a conversion restriction. Prefer a manifest
+or original webpage URL for a complete HLS/DASH video; an isolated fragment may lack
+initialization data, other segments, or audio.
 
-## Capture URLs
-
-1. Toggle **Capture .ts/.m3u8 URLs** on in the popup.
-2. Play the media in the tab you want to download from.
-3. Open the extension popup to view captured URLs.
-4. Use **Download urls.txt** or **Copy** to export.
-
-## Download in VD-uni
+Use **Download urls.txt** or **Copy**, then run:
 
 ```bash
 ./scripts/vd download --file urls.txt
 ```
 
-This works for direct `.ts` segment URLs or `.m3u8` playlists.
+Signed query strings are preserved exactly. They can contain access tokens and
+can expire; do not publish exported lists. Some sites also need an authorized
+cookie file or a webpage extractor. Capturing a URL does not guarantee downloads
+are allowed or technically possible. `blob:` URLs are browser-local references,
+not standalone network downloads. DRM and paywalls are not bypassed.
 
-## Notes
-
-- The extension only observes traffic; it does not bypass DRM or paywalls.
-- Use cookie export when a site requires authentication:
-
-```bash
-./scripts/vd cookies --browser chrome --domain example.com
-```
+The extension requests HTTP(S) host visibility to detect media across sites, but
+capture remains off until enabled. Its classification, concurrency, persistence,
+and clearing logic have automated tests. A live Chrome end-to-end permission and
+popup interaction test has not been run as part of this change.

@@ -1,17 +1,18 @@
 # Architecture
 
-## Modules
-- `src/core/` orchestration, config loading, logging
-- `src/downloaders/` site adapters and quality selection
-- `src/installers/` dependency install helpers
-- `src/updaters/` update checks for tools and site adapters
-- `src/utils/` shared helpers
+- `src/vd/core/cli.py`: download/cookie/update/version entry points and overrides.
+- `src/vd/core/media_cli.py`: conversion, probe, formats and dependency diagnostics.
+- `src/vd/core/config.py`: validated settings and cookie locations.
+- `src/vd/downloaders/ytdlp_adapter.py`: safe yt-dlp argv, retries, stream integrity,
+  cookie preference, ordered batch deduplication.
+- `src/vd/media.py`: content probe, FFmpeg/VLC adapters, timeout accounting,
+  stream validation and atomic output publication.
+- `src/vd/gui.py`: Tk downloader; workers emit queue events, widgets update only
+  on the main UI thread.
+- `extensions/vd-uni-chrome`: opt-in response classification and bounded serialized
+  local URL storage. No native browser-to-shell bridge is installed.
+- `tests/`: unit, real-media, container-loopback download, GUI and extension tests.
 
-## Data Flow
-1. Load config
-2. Validate environment
-3. Resolve target URL and auth (cookies if required)
-4. Select highest quality
-5. Download
-6. Log results and errors
-
+Remote download and local conversion are distinct operations. There is no
+attempt to treat arbitrary webpage HTML as a video or to solve unsupported DRM.
+The optional VLC backend is integrated through its CLI, not a fork of its source.

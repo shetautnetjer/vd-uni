@@ -9,4 +9,4 @@ else
 fi
 export PYTHONPATH="$DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
-$PYTHON -m vd.core.cli "$@"
+"$PYTHON" -m vd.core.cli "$@"

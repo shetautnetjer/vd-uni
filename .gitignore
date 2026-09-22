@@ -19,3 +19,15 @@ config/cookies/
 # OS
 .DS_Store
 Thumbs.db
+# Local environment and exported signed URL lists
+.env
+.env.*
+urls*.txt
+*.part
+
+# Private credential containers
+*.pem
+*.key
+*.p12
+*.pfx
+config/private/

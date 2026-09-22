@@ -1,56 +1,44 @@
-const STATE_KEY = "vd_capture_state";
-const URL_KEY = "vd_captured_urls";
+importScripts('media.js');
+const STATE_KEY = 'vd_capture_state';
+const URL_KEY = 'vd_captured_urls';
+let pendingWrites = Promise.resolve();
 
-let captureEnabled = true;
+// Serial read/modify/write prevents simultaneous fragments losing each other.
+// Persisted state is checked on every operation, including worker restarts.
+function enqueue(operation) {
+  pendingWrites = pendingWrites.then(operation).catch(() => {
+    console.warn('VD-uni could not update local capture storage.');
+  });
+  return pendingWrites;
+}
 
-const looksLikeMediaSegment = (url) => {
-  const lower = url.toLowerCase();
-  return (
-    lower.endsWith(".ts") ||
-    lower.includes(".ts?") ||
-    lower.endsWith(".m3u8") ||
-    lower.includes(".m3u8?")
-  );
-};
-
-const loadState = async () => {
+chrome.runtime.onInstalled.addListener(() => enqueue(async () => {
   const data = await chrome.storage.local.get([STATE_KEY, URL_KEY]);
-  if (data[STATE_KEY] && typeof data[STATE_KEY].enabled === "boolean") {
-    captureEnabled = data[STATE_KEY].enabled;
-  } else {
+  if (!data[STATE_KEY]) {
     await chrome.storage.local.set({
-      [STATE_KEY]: { enabled: true },
-      [URL_KEY]: [],
+      [STATE_KEY]: { enabled: false, includeSegments: false }, [URL_KEY]: [],
     });
   }
-};
+}));
 
-chrome.runtime.onInstalled.addListener(() => {
-  loadState();
+chrome.webRequest.onHeadersReceived.addListener(details => {
+  if (details.tabId < 0 || details.statusCode < 200 || details.statusCode >= 300) return;
+  const contentType = (details.responseHeaders || [])
+    .find(header => header.name.toLowerCase() === 'content-type')?.value || '';
+  const kind = VDMedia.classifyMedia(details.url, contentType);
+  if (!kind) return;
+  enqueue(async () => {
+    const data = await chrome.storage.local.get([STATE_KEY, URL_KEY]);
+    if (data[STATE_KEY]?.enabled !== true) return;
+    if (kind === 'segment' && data[STATE_KEY]?.includeSegments !== true) return;
+    const urls = VDMedia.addCaptured(data[URL_KEY], details.url);
+    await chrome.storage.local.set({ [URL_KEY]: urls });
+  });
+}, { urls: ['http://*/*', 'https://*/*'] }, ['responseHeaders']);
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type !== 'vd-clear') return false;
+  enqueue(() => chrome.storage.local.set({ [URL_KEY]: [] }))
+    .then(() => sendResponse({ ok: true }));
+  return true;
 });
-
-chrome.runtime.onStartup.addListener(() => {
-  loadState();
-});
-
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
-  if (changes[STATE_KEY]) {
-    captureEnabled = !!changes[STATE_KEY].newValue?.enabled;
-  }
-});
-
-chrome.webRequest.onCompleted.addListener(
-  async (details) => {
-    if (!captureEnabled) return;
-    if (!looksLikeMediaSegment(details.url)) return;
-
-    const data = await chrome.storage.local.get(URL_KEY);
-    const existing = Array.isArray(data[URL_KEY]) ? data[URL_KEY] : [];
-    if (existing.includes(details.url)) return;
-
-    existing.push(details.url);
-    await chrome.storage.local.set({ [URL_KEY]: existing });
-  },
-  { urls: ["<all_urls>"] }
-);

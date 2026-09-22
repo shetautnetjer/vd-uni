@@ -9,4 +9,4 @@ else
 fi
 export PYTHONPATH="$DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
-$PYTHON -m vd.gui
+"$PYTHON" -m vd.gui

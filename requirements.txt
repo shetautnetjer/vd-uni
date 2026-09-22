@@ -1,2 +1,2 @@
-yt-dlp>=2024.12.23
+yt-dlp[default]>=2026.8.19
 browser-cookie3>=0.19.1
